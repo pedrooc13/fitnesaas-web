@@ -80,6 +80,16 @@ export async function deleteAccount(formData: FormData) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
+  // 1) Apaga as fotos do bucket privado. Se não conseguir listar, não apaga a conta.
+  const { data: files, error: listError } = await admin.storage.from("avatars").list(user.id, { limit: 100 });
+  if (listError) redirect(err("Não foi possível excluir a conta agora. Tente novamente."));
+  const paths = (files ?? []).map((f) => `${user.id}/${f.name}`);
+  if (paths.length > 0) {
+    const { error: removeError } = await admin.storage.from("avatars").remove(paths);
+    if (removeError) redirect(err("Não foi possível excluir a conta agora. Tente novamente."));
+  }
+
+  // 2) Apaga o usuário: perfil e refeições saem junto pela cascata do banco
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) redirect(err("Não foi possível excluir a conta"));
 

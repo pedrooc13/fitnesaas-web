@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { PRIVACY_VERSION, TERMS_VERSION } from "@/lib/legal";
 
 const site = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -10,6 +11,14 @@ const emailSchema = z.string().trim().toLowerCase().email();
 const passwordSchema = z.string().min(8, "A senha precisa de pelo menos 8 caracteres").max(72);
 
 const msg = (text: string) => encodeURIComponent(text);
+
+/** Prova do aceite: versão dos termos e da política, e o momento do aceite */
+const consentData = (name: string) => ({
+  name,
+  terms_version: TERMS_VERSION,
+  privacy_version: PRIVACY_VERSION,
+  consent_at: new Date().toISOString(),
+});
 
 export async function login(formData: FormData) {
   const email = String(formData.get("email") ?? "");
@@ -32,6 +41,14 @@ export async function signup(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  const acceptTerms = formData.get("accept_terms") === "on";
+  const acceptPrivacy = formData.get("accept_privacy") === "on";
+
+  if (password !== confirm) redirect(`/cadastro?erro=${msg("As senhas não conferem")}`);
+  if (!acceptTerms || !acceptPrivacy) {
+    redirect(`/cadastro?erro=${msg("Você precisa aceitar os termos e a política para criar a conta")}`);
+  }
 
   const e = emailSchema.safeParse(email);
   if (!e.success) redirect(`/cadastro?erro=${msg("Email inválido")}`);
@@ -44,7 +61,7 @@ export async function signup(formData: FormData) {
     email: e.data,
     password,
     options: {
-      data: { name },
+      data: consentData(name),
       emailRedirectTo: `${site()}/auth/callback?next=/app/perfil`,
     },
   });
@@ -124,4 +141,20 @@ export async function loginWithGoogle(formData: FormData) {
     redirect(`/login?erro=${msg("Não foi possível entrar com Google. Tente novamente.")}`);
   }
   redirect(data.url);
+}
+
+/** Aceite para quem entrou com Google ou tem uma versão nova dos termos */
+export async function acceptTerms(formData: FormData) {
+  if (formData.get("accept_terms") !== "on" || formData.get("accept_privacy") !== "on") {
+    redirect(`/aceitar-termos?erro=${msg("Marque os dois aceites para continuar")}`);
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.auth.updateUser({
+    data: consentData(String(user.user_metadata?.name ?? "")),
+  });
+  if (error) redirect(`/aceitar-termos?erro=${msg("Não foi possível registrar o aceite. Tente novamente.")}`);
+  redirect("/app");
 }
