@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-/* Tokens do design: claro (fitnesaas_1) e escuro (fitnesaas_2) */
+/*
+  Tema: por padrão segue o celular (prefers-color-scheme).
+  Se o usuário escolher Claro ou Escuro em Configurações, o cookie "theme"
+  coloca a classe .light ou .dark no <html>, e essa classe tem prioridade.
+*/
 :root {
   --background: #faf9fe;
   --card: #ffffff;
@@ -14,14 +18,16 @@
   --fat: #ffcc00;
   --destructive: #ba1a1a;
   --plan-free: #98989f;
-  --plan-max: #0a8491;
+  --plan-max: #8b4a00;
+  --info: #006973;
+  --excess: #ff9500;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --card: #1c1c1e;
-    --track: #353535;
+  :root:not(.light) {
+    --background: #131313;
+    --card: #1f1f1f;
+    --track: #2a2a2a;
     --text: #e2e2e2;
     --text-2: #bbcbb5;
     --primary: #32d74b;
@@ -30,7 +36,29 @@
     --carbs: #ff9f0a;
     --fat: #ffd60a;
     --destructive: #ffb4ab;
+    --plan-free: #98989f;
+    --plan-max: #0a8491;
+    --info: #5ac8fa;
+    --excess: #ff9f0a;
   }
+}
+
+:root.dark {
+  --background: #131313;
+  --card: #1f1f1f;
+  --track: #2a2a2a;
+  --text: #e2e2e2;
+  --text-2: #bbcbb5;
+  --primary: #32d74b;
+  --on-primary: #00390a;
+  --protein: #ff453a;
+  --carbs: #ff9f0a;
+  --fat: #ffd60a;
+  --destructive: #ffb4ab;
+  --plan-free: #98989f;
+  --plan-max: #0a8491;
+  --info: #5ac8fa;
+  --excess: #ff9f0a;
 }
 
 @theme inline {
@@ -47,6 +75,8 @@
   --color-destructive: var(--destructive);
   --color-plan-free: var(--plan-free);
   --color-plan-max: var(--plan-max);
+  --color-info: var(--info);
+  --color-excess: var(--excess);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
 }
 
