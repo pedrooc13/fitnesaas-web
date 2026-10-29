@@ -54,22 +54,39 @@ export async function signup(formData: FormData) {
       : "Não foi possível criar a conta. Tente novamente.";
     redirect(`/cadastro?erro=${msg(message)}`);
   }
-  // Com confirmação de email ativa, o usuário precisa clicar no link antes de entrar
   redirect("/login?msg=" + msg("Enviamos um link de confirmação para o seu email"));
 }
 
+/** Passo 1: envia o código de 6 dígitos por email */
 export async function forgotPassword(formData: FormData) {
   const parsed = emailSchema.safeParse(String(formData.get("email") ?? ""));
   if (parsed.success) {
     const supabase = await createClient();
-    await supabase.auth.resetPasswordForEmail(parsed.data, {
-      redirectTo: `${site()}/auth/callback?next=/redefinir-senha`,
-    });
+    // Sem redirectTo: o email traz o código ({{ .Token }}), não um link
+    await supabase.auth.resetPasswordForEmail(parsed.data);
+    redirect(`/esqueci-senha/codigo?email=${encodeURIComponent(parsed.data)}&msg=${msg("Se o email estiver cadastrado, enviamos um código.")}`);
   }
-  // Resposta igual exista ou não o email
-  redirect("/esqueci-senha?msg=" + msg("Se o email estiver cadastrado, você receberá o link em instantes."));
+  redirect(`/esqueci-senha?erro=${msg("Informe um email válido")}`);
 }
 
+/** Passo 2: confere o código de 6 dígitos. Se estiver certo, cria a sessão de recuperação */
+export async function verifyRecoveryCode(formData: FormData) {
+  const email = emailSchema.safeParse(String(formData.get("email") ?? ""));
+  const token = String(formData.get("token") ?? "").replace(/\D/g, "");
+  if (!email.success) redirect(`/esqueci-senha?erro=${msg("Informe seu email novamente")}`);
+  if (token.length !== 6) {
+    redirect(`/esqueci-senha/codigo?email=${encodeURIComponent(email.data)}&erro=${msg("Digite os 6 números do código")}`);
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ email: email.data, token, type: "recovery" });
+  if (error) {
+    redirect(`/esqueci-senha/codigo?email=${encodeURIComponent(email.data)}&erro=${msg("Código inválido ou expirado")}`);
+  }
+  redirect("/redefinir-senha");
+}
+
+/** Passo 3: troca a senha usando a sessão criada pelo código */
 export async function resetPassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const p = passwordSchema.safeParse(password);
@@ -77,15 +94,34 @@ export async function resetPassword(formData: FormData) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?erro=${msg("O link expirou. Solicite um novo.")}`);
+  if (!user) redirect(`/esqueci-senha?erro=${msg("Sua sessão expirou. Solicite um novo código.")}`);
 
   const { error } = await supabase.auth.updateUser({ password });
   if (error) redirect(`/redefinir-senha?erro=${msg("Não foi possível trocar a senha")}`);
-  redirect("/app?msg=" + msg("Senha alterada com sucesso"));
+  await supabase.auth.signOut();
+  redirect("/login?msg=" + msg("Senha alterada. Entre com a nova senha."));
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+/** Login e cadastro com Google: o Supabase redireciona para o Google e volta para /auth/callback */
+export async function loginWithGoogle(formData: FormData) {
+  const requested = String(formData.get("next") ?? "/app");
+  const next = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/app";
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${site()}/auth/callback?next=${encodeURIComponent(next)}`,
+    },
+  });
+  if (error || !data.url) {
+    redirect(`/login?erro=${msg("Não foi possível entrar com Google. Tente novamente.")}`);
+  }
+  redirect(data.url);
 }

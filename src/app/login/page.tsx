@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { login } from "@/app/auth/actions";
 import { Button, Field, Notice } from "@/components/ui";
+import { GoogleButton } from "@/components/google-button";
 
 export const metadata: Metadata = { title: "Entrar" };
 
@@ -25,6 +26,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <Field name="password" type="password" label="Senha" autoComplete="current-password" required />
         <Button type="submit">Entrar</Button>
       </form>
+
+      <div className="flex items-center gap-3 text-xs text-text-2">
+        <span className="h-px flex-1 bg-track" />ou<span className="h-px flex-1 bg-track" />
+      </div>
+      <GoogleButton next="/app" />
 
       <div className="flex flex-col items-center gap-2 text-sm">
         <Link href="/esqueci-senha" className="font-semibold text-primary">Esqueci minha senha</Link>

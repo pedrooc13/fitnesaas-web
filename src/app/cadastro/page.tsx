@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { signup } from "@/app/auth/actions";
 import { Button, Field, Notice } from "@/components/ui";
+import { GoogleButton } from "@/components/google-button";
 
 export const metadata: Metadata = { title: "Criar conta" };
 
@@ -22,6 +23,11 @@ export default async function CadastroPage({ searchParams }: { searchParams: Pro
         <Field name="password" type="password" label="Senha (mínimo 8 caracteres)" autoComplete="new-password" minLength={8} required />
         <Button type="submit">Criar conta</Button>
       </form>
+
+      <div className="flex items-center gap-3 text-xs text-text-2">
+        <span className="h-px flex-1 bg-track" />ou<span className="h-px flex-1 bg-track" />
+      </div>
+      <GoogleButton next="/app/perfil" label="Cadastrar com Google" />
 
       <p className="text-center text-sm text-text-2">
         Já tem conta? <Link href="/login" className="font-semibold text-primary">Entrar</Link>
