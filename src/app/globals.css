@@ -7,7 +7,7 @@
 */
 :root {
   --background: #faf9fe;
-  --card: #ffffff;
+  --card: #f4f3f8;
   --track: #e9e7ed;
   --text: #1a1b1f;
   --text-2: #3d4a3c;
@@ -77,7 +77,18 @@
   --color-plan-max: var(--plan-max);
   --color-info: var(--info);
   --color-excess: var(--excess);
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+}
+
+/* Escuro: SF Pro (fonte do sistema no iPhone), como no DESIGN.md do modo escuro */
+:root.dark,
+:root:not(.light) {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  }
 }
 
 html,
@@ -87,3 +98,36 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Logo por modo, como nos designs: raio no claro, chama no escuro */
+.logo-flame { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .logo-flame { display: block; }
+  :root:not(.light) .logo-bolt { display: none; }
+}
+:root.dark .logo-flame { display: block; }
+:root.dark .logo-bolt { display: none; }
+
+/* Cartão de login: no escuro há cartão; no claro os campos ficam direto no fundo */
+.auth-card { background: var(--card); }
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .auth-card { background: transparent; padding: 0; }
+}
+:root.light .auth-card { background: transparent; padding: 0; }
+
+/* Telas com layout diferente por modo (como nos designs) */
+.hoje-dark-only { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .hoje-dark-only { display: block; }
+  :root:not(.light) .hoje-light-only { display: none; }
+}
+:root.dark .hoje-dark-only { display: block; }
+:root.dark .hoje-light-only { display: none; }
+
+/* Botão de segmento selecionado: claro = cartão; escuro = verde (como nos designs) */
+.seg-active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .seg-active { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+}
+:root.dark .seg-active { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+:root.light .seg-active { background: var(--card); color: var(--text); }

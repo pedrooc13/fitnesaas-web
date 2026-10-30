@@ -58,12 +58,12 @@ export function MacroBar({ label, color, consumed, goal }: { label: string; colo
 }
 
 /** Anel de progresso em SVG (sem JavaScript no cliente) */
-export function Ring({ progress, remaining }: { progress: number; remaining: number }) {
+export function Ring({ progress, remaining, size = 200 }: { progress: number; remaining: number; size?: number }) {
   const r = 84;
   const c = 2 * Math.PI * r;
   const offset = c * (1 - Math.min(Math.max(progress, 0), 1));
   return (
-    <div className="relative mx-auto h-[200px] w-[200px]">
+    <div className="relative mx-auto" style={{ height: size, width: size }}>
       <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
         <circle cx="100" cy="100" r={r} fill="none" stroke="var(--track)" strokeWidth="16" />
         <circle
